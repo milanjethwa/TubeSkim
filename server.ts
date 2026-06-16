@@ -41,6 +41,7 @@ app.post("/api/gemini/prepare-notes", async (req, res) => {
       transcriptRaw = "",
       skimStyle = "Executive Summary",
       customInstructions = "",
+      existingHistory = [],
     } = req.body;
 
     const googleAi = getGeminiClient();
@@ -65,6 +66,17 @@ Always return valid JSON according to the schema. Make the chapters detailed, in
     requestPrompt += `- Targeted Skimming/Study Workspace Style: ${skimStyle}\n`;
     if (customInstructions) {
       requestPrompt += `- Custom Instructions/Focus areas: ${customInstructions}\n`;
+    }
+
+    if (existingHistory && existingHistory.length > 0) {
+      requestPrompt += `\nExisting AI History in this workspace (use this context to align tone, build on top of previous concepts, and create beautiful, cohesive cross-references if relevant): \n`;
+      existingHistory.forEach((item: any, idx: number) => {
+        requestPrompt += `- Workspace Draft #${idx + 1}: "${item.title}" [Type: ${item.skimStyle || "General"}] (URL: ${item.url || "N/A"})\n`;
+        if (item.keyConcepts && item.keyConcepts.length > 0) {
+          requestPrompt += `  Concepts Covered previously in workspace: ${item.keyConcepts.join(", ")}\n`;
+        }
+      });
+      requestPrompt += `Please connect new concepts to previous entries under "Existing AI History" when applicable to construct a unified brain space!\n`;
     }
 
     if (transcriptRaw.trim()) {

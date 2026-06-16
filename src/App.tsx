@@ -338,6 +338,12 @@ export default function App() {
           transcriptRaw: transcriptText.trim(),
           skimStyle,
           customInstructions: customInstructions.trim(),
+          existingHistory: history.map((item) => ({
+            title: item.notes.title,
+            url: item.url,
+            skimStyle: item.skimStyle,
+            keyConcepts: item.notes.keyConcepts.map((c) => c.concept),
+          })),
         }),
       });
 
