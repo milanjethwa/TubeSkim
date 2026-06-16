@@ -1,0 +1,6 @@
+{
+  "name": "YouTube Notes Studio",
+  "description": "A professional tool to skim, organize, draft, and study high-yield notes and summaries from YouTube videos.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
