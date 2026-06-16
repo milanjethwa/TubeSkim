@@ -59,30 +59,39 @@ Target Skim Style constraints:
 Always return valid JSON according to the schema. Make the chapters detailed, informative, and cohesive. Avoid lazy markers like "etc" or "and so on".`;
 
     // Construct the prompt combining all pieces of content
-    let requestPrompt = `Please analyze the following YouTube video content:
+    let requestPrompt = `Please analyze the following YouTube video content.
 `;
-    if (url) requestPrompt += `- YouTube URL: ${url}\n`;
-    if (title) requestPrompt += `- Video Title: ${title}\n`;
+    if (url) {
+      requestPrompt += `
+CRITICAL: You MUST focus entirely on summarizing and analyzing this NEW YouTube video at URL: "${url}".
+Use your integrated googleSearch tool to retrieve the authentic video title, channel, duration, chapters, or description for this URL: "${url}".
+Do NOT output the details or topic of any previous video.
+`;
+    }
+    
+    if (title && title !== "YouTube Context Stream" && title !== "Web Lecture Stream" && title !== "Pasted Transcript Deck") {
+      requestPrompt += `- Supposed Video Title: ${title}\n`;
+    }
     requestPrompt += `- Targeted Skimming/Study Workspace Style: ${skimStyle}\n`;
     if (customInstructions) {
       requestPrompt += `- Custom Instructions/Focus areas: ${customInstructions}\n`;
     }
 
     if (existingHistory && existingHistory.length > 0) {
-      requestPrompt += `\nExisting AI History in this workspace (use this context to align tone, build on top of previous concepts, and create beautiful, cohesive cross-references if relevant): \n`;
+      requestPrompt += `\nExisting AI History in this workspace (IMPORTANT: This list represents files that have already been drafted in prior turns. DO NOT repeat, clone, or merge their contents with the new video. Use this only to maintain consistent tone or style): \n`;
       existingHistory.forEach((item: any, idx: number) => {
-        requestPrompt += `- Workspace Draft #${idx + 1}: "${item.title}" [Type: ${item.skimStyle || "General"}] (URL: ${item.url || "N/A"})\n`;
+        requestPrompt += `- Already Completed Draft #${idx + 1}: "${item.title}" [Type: ${item.skimStyle || "General"}] (URL: ${item.url || "N/A"})\n`;
         if (item.keyConcepts && item.keyConcepts.length > 0) {
-          requestPrompt += `  Concepts Covered previously in workspace: ${item.keyConcepts.join(", ")}\n`;
+          requestPrompt += `  Concepts Covered previously: ${item.keyConcepts.join(", ")}\n`;
         }
       });
-      requestPrompt += `Please connect new concepts to previous entries under "Existing AI History" when applicable to construct a unified brain space!\n`;
+      requestPrompt += `Do NOT reuse or summarize those completed drafts. Focus 100% on the new URL "${url || "current transcript"}"!\n`;
     }
 
     if (transcriptRaw.trim()) {
       requestPrompt += `\nRaw subtitle transcript / Notes text to summarize:\n"""\n${transcriptRaw}\n"""\n`;
     } else {
-      requestPrompt += `\n(No transcript text was provided. Please look up general knowledge, or use Google Search simulation internally if needed to reconstruct highly accurate and comprehensive chapters, action plan, and concept insights for this video or theme: "${title || url}").\n`;
+      requestPrompt += `\nCRITICAL: No transcript text was provided. You MUST use your Google Search grounding tool to search and fetch precise information (title, channel, video duration, and summaries/lessons) for this YouTube URL: "${url}". Then structure highly accurate chapters, action plans, definitions, quizzes, and flashcards specifically for this new video. Defend against hallucination by strictly centering the notes on this target URL is content.\n`;
     }
 
     requestPrompt += `\nGenerate complete, rigorous results. Your response must fit the defined schema strictly. Create beautiful visual markdown notes for the "formattedMarkdown" field, featuring bullet points, horizontal dividers, quotes, and clear subheaders.`;
@@ -93,6 +102,7 @@ Always return valid JSON according to the schema. Make the chapters detailed, in
       config: {
         systemInstruction: systemPrompt,
         responseMimeType: "application/json",
+        tools: [{ googleSearch: {} }],
         responseSchema: {
           type: Type.OBJECT,
           properties: {
